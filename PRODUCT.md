@@ -9,7 +9,7 @@ Primary audience hypothesis: established owner-led businesses facing a specific 
 First fully designed responsive homepage, with expertise, clearly labeled illustrative engagements, one editorial perspective, events/programming, founders, and a durable inquiry form. Navigation uses page anchors. Essay and inquiries use accessible dialogs. No invented case studies, event dates, metrics, testimonials, partner logos, or founder portraits. No newsletter enrollment is implied by an inquiry.
 
 ## Inquiry operations
-Inquiries are stored in the Sites D1 database and can be read by the owner through Sites' database tools. There is no email notification, delivery, or automatic reply integration. The confirmation page honestly says saved for review and gives a reference. Production operations need an owner notification channel or routine review before a public launch.
+Inquiries are stored through Netlify Forms and can be read by the owner in Netlify’s Forms dashboard. The business intake keeps stage, outcome, priority, timing, budget, and source as separate fields. There is no email notification, delivery, or automatic reply integration. The confirmation state honestly says saved for review and gives a reference. Production operations need an owner notification channel or routine review before a public launch.
 
 ## Evidence and unknowns
 Services and founder responsibilities are user-provided. Example engagements are illustrative only. Generated dinner imagery is labeled conceptual. Real founder photography and actual client results remain user-provided assets for later iteration. Do not invent them.

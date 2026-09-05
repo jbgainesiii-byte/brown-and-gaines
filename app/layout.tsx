@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  metadataBase: new URL("https://brown-and-gaines.jbg333.chatgpt.site"),
+  metadataBase: new URL("https://brown-and-gaines.netlify.app"),
   title: "Brown & Gaines | Business Strategy & Implementation",
   description: "Brown & Gaines brings business strategy, coaching, applied AI, and systems together to build what your business needs next. Founded in Detroit.",
   alternates: { canonical: "/" },

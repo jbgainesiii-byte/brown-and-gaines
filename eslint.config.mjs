@@ -14,6 +14,13 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   {
+    rules: {
+      // Full-page anchors keep hash navigation and the static Netlify export
+      // usable even before the client-side bundle hydrates.
+      "@next/next/no-html-link-for-pages": "off",
+    },
+  },
+  {
     files: ["components/ui/**/*.{ts,tsx}", "hooks/use-mobile.ts"],
     rules: {
       // These files are vendored verbatim from shadcn@4.17.0. Keep the

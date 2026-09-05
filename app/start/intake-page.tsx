@@ -1,13 +1,176 @@
 "use client";
-import {useState,useEffect,type FormEvent} from "react";
-import {ArrowRight,ArrowUpRight,ArrowLeft,Loader2,Check} from "lucide-react";
-import {Brand} from "@/components/site-brand";
-type Fields={name:string;email:string;business:string;stage:string;message:string;outcome:string;priority:string;timing:string;budget:string;website:string};
-const initial:Fields={name:"",email:"",business:"",stage:"",message:"",outcome:"",priority:"",timing:"",budget:"",website:""};
-export default function IntakePage(){const [step,setStep]=useState(0);const [fields,setFields]=useState(initial);const [status,setStatus]=useState("idle");const [error,setError]=useState("");const [reference,setReference]=useState("");const [requestId,setRequestId]=useState("");
- useEffect(()=>{if(new URL(window.location.href).searchParams.get("topic")==="quote-follow-up")setFields(v=>({...v,priority:"Sales and follow-up"}));},[]);
- const update=(name:keyof Fields,value:string)=>setFields(v=>({...v,[name]:value}));
- const select=(label:string,key:keyof Fields,options:string[])=><label>{label}<select required value={fields[key]} onChange={e=>update(key,e.target.value)}><option value="" disabled>Select one</option>{options.map(x=><option key={x}>{x}</option>)}</select></label>;
- async function next(e:FormEvent<HTMLFormElement>){e.preventDefault();if(status==="sending")return;if(step<2){setStep(step+1);return}setStatus("sending");setError("");const id=requestId||crypto.randomUUID();setRequestId(id);const source=new URL(window.location.href).searchParams.get("source");try{const response=await fetch("/api/inquiries",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({requestId:id,name:fields.name,email:fields.email,business:fields.business,message:fields.message,website:fields.website,interest:fields.priority==="Business operations"?"AI & systems":fields.priority==="Offer and positioning"?"Business strategy":"Not sure yet",source:["event","referral","email","business-card"].includes(source||"")?source:"website",intake:{stage:fields.stage,outcome:fields.outcome,priority:fields.priority,timing:fields.timing,budget:fields.budget}})});const data=await response.json() as {error?:string;reference?:string};if(!response.ok||!data.reference)throw new Error(data.error||"We couldn’t save your brief. Please try again.");setReference(data.reference);setStatus("success")}catch(e){setError(e instanceof Error?e.message:"Please try again.");setStatus("error")}}
- return <><a className="skip-link" href="#main">Skip to content</a><header className="site-header"><div className="header-inner"><Brand/><a className="intake-back" href="/">Back to the firm <ArrowUpRight size={17}/></a></div></header><main className="container intake-layout" id="main"><aside><p className="eyebrow">Let’s begin with your business</p><h1>What needs<br/>to change?</h1><p>Tell us where you are, what you’re working toward, and what’s getting in the way.</p><p>We’ll review your brief and identify a suitable next step. No payment is taken here.</p><div className="intake-promise"><span>One brief. A clear starting point.</span><p>Your answers give Ryan and Johnny the same context from the beginning.</p></div></aside><section className="intake-panel" aria-label="Business intake">{status==="success"?<div className="intake-success" role="status"><Check size={32}/><p className="eyebrow">Business brief received</p><h2>Thank you for<br/>starting here.</h2><p>Your brief has been saved for Brown & Gaines to review. Keep this reference for your records.</p><p className="receipt">Reference: {reference}</p><a className="button button-blue" href="/">Back to the firm <ArrowRight size={18}/></a></div>:<><ol className="intake-progress" aria-label="Your progress">{["Your business","The decision","Next steps"].map((x,i)=><li key={x} aria-current={step===i?"step":undefined}><span>{i+1}</span>{x}</li>)}</ol><form onSubmit={next} className="inquiry-form"><h2 className="intake-step-title" tabIndex={-1}>{["A little about you.","The question in front of you.","What would work for you?"][step]}</h2>{step===0&&<><label>Your name<input autoComplete="name" required maxLength={120} value={fields.name} onChange={e=>update("name",e.target.value)}/></label><label>Email address<input type="email" autoComplete="email" required maxLength={254} value={fields.email} onChange={e=>update("email",e.target.value)}/></label><label>Business or organization<input autoComplete="organization" required maxLength={180} value={fields.business} onChange={e=>update("business",e.target.value)}/></label>{select("Where is the business today?","stage",["Operating business","Launching an offer","Starting a business"])}</>}{step===1&&<>{select("What needs attention first?","priority",["Offer and positioning","Sales and follow-up","Client delivery","Business operations","Not sure yet"])}<label>What is happening now?<textarea required minLength={10} maxLength={4000} rows={4} value={fields.message} onChange={e=>update("message",e.target.value)} placeholder="Describe the situation, including what you’ve already tried."/></label><label>What would a useful result look like?<textarea required minLength={10} maxLength={2000} rows={3} value={fields.outcome} onChange={e=>update("outcome",e.target.value)} placeholder="Tell us what you want to be different."/></label></>}{step===2&&<>{select("When would you like to begin?","timing",["This month","Next 1–3 months","Exploring"])}{select("What investment range are you considering?","budget",["Under $2,500","$2,500–$5,000","$5,000–$10,000","$10,000+","Need guidance"])}<p className="form-privacy">This helps us assess fit. It is not a quote or a commitment to purchase.</p><div className="intake-summary"><strong>{fields.business}</strong><p>{fields.priority} · {fields.stage}</p><p>Reply address: {fields.email}</p></div><p className="form-privacy">We use your answers to review and respond to this request. This does not sign you up for marketing. Please leave out passwords and confidential client information.</p></>}<div className="form-trap" aria-hidden="true"><label>Website<input tabIndex={-1} autoComplete="off" value={fields.website} onChange={e=>update("website",e.target.value)}/></label></div>{error&&<p className="form-error" role="alert">{error}</p>}<div className="intake-actions">{step>0&&<button type="button" className="text-link" disabled={status==="sending"} onClick={()=>setStep(step-1)}><ArrowLeft size={16}/>Back</button>}<button className="button button-blue" disabled={status==="sending"}>{status==="sending"?<>Saving <Loader2 size={18} className="spin"/></>:<>{step===2?"Send your brief":"Continue"}<ArrowRight size={18}/></>}</button></div></form></>}</section></main><footer className="intake-footer container">Brown & Gaines · Business strategy & implementation</footer></>;
+
+import { useState, useEffect, type FormEvent } from "react";
+import { ArrowRight, ArrowUpRight, ArrowLeft, Loader2, Check } from "lucide-react";
+import { Brand } from "@/components/site-brand";
+import { submitNetlifyForm } from "@/lib/netlify-forms";
+
+type Fields = {
+  name: string;
+  email: string;
+  business: string;
+  stage: string;
+  message: string;
+  outcome: string;
+  priority: string;
+  timing: string;
+  budget: string;
+  website: string;
+};
+
+const initial: Fields = {
+  name: "",
+  email: "",
+  business: "",
+  stage: "",
+  message: "",
+  outcome: "",
+  priority: "",
+  timing: "",
+  budget: "",
+  website: "",
+};
+
+const allowedSources = ["event", "referral", "email", "business-card"];
+
+export default function IntakePage() {
+  const [step, setStep] = useState(0);
+  const [fields, setFields] = useState(initial);
+  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [error, setError] = useState("");
+  const [reference, setReference] = useState("");
+  const [requestId, setRequestId] = useState("");
+
+  useEffect(() => {
+    if (new URL(window.location.href).searchParams.get("topic") === "quote-follow-up") {
+      setFields((value) => ({ ...value, priority: "Sales and follow-up" }));
+    }
+  }, []);
+
+  const update = (name: keyof Fields, value: string) => setFields((current) => ({ ...current, [name]: value }));
+  const select = (label: string, key: keyof Fields, options: string[]) => (
+    <label>
+      {label}
+      <select name={key} required value={fields[key]} onChange={(event) => update(key, event.target.value)}>
+        <option value="" disabled>Select one</option>
+        {options.map((option) => <option key={option}>{option}</option>)}
+      </select>
+    </label>
+  );
+
+  async function next(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (status === "sending") return;
+    if (step < 2) {
+      setStep(step + 1);
+      return;
+    }
+
+    setStatus("sending");
+    setError("");
+    const id = requestId || crypto.randomUUID();
+    setRequestId(id);
+    const requestedSource = new URL(window.location.href).searchParams.get("source");
+    const source = allowedSources.includes(requestedSource || "") ? requestedSource! : "website";
+    const interest = fields.priority === "Business operations"
+      ? "AI & systems"
+      : fields.priority === "Offer and positioning"
+        ? "Business strategy"
+        : "Not sure yet";
+
+    try {
+      await submitNetlifyForm("business-intake", {
+        requestId: id,
+        source,
+        name: fields.name,
+        email: fields.email,
+        business: fields.business,
+        interest,
+        message: fields.message,
+        stage: fields.stage,
+        outcome: fields.outcome,
+        priority: fields.priority,
+        timing: fields.timing,
+        budget: fields.budget,
+        website: fields.website,
+      });
+      setReference(`BG-${id.slice(0, 8).toUpperCase()}`);
+      setStatus("success");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Please try again.");
+      setStatus("error");
+    }
+  }
+
+  return (
+    <>
+      <a className="skip-link" href="#main">Skip to content</a>
+      <header className="site-header">
+        <div className="header-inner"><Brand /><a className="intake-back" href="/">Back to the firm <ArrowUpRight size={17} /></a></div>
+      </header>
+      <main className="container intake-layout" id="main">
+        <aside>
+          <p className="eyebrow">Let’s begin with your business</p>
+          <h1>What needs<br />to change?</h1>
+          <p>Tell us where you are, what you’re working toward, and what’s getting in the way.</p>
+          <p>We’ll review your brief and identify a suitable next step. No payment is taken here.</p>
+          <div className="intake-promise"><span>One brief. A clear starting point.</span><p>Your answers give Ryan and Johnny the same context from the beginning.</p></div>
+        </aside>
+        <section className="intake-panel" aria-label="Business intake">
+          {status === "success" ? (
+            <div className="intake-success" role="status">
+              <Check size={32} />
+              <p className="eyebrow">Business brief received</p>
+              <h2>Thank you for<br />starting here.</h2>
+              <p>Your brief has been saved for Brown & Gaines to review. Keep this reference for your records.</p>
+              <p className="receipt">Reference: {reference}</p>
+              <a className="button button-blue" href="/">Back to the firm <ArrowRight size={18} /></a>
+            </div>
+          ) : (
+            <>
+              <ol className="intake-progress" aria-label="Your progress">
+                {["Your business", "The decision", "Next steps"].map((label, index) => <li key={label} aria-current={step === index ? "step" : undefined}><span>{index + 1}</span>{label}</li>)}
+              </ol>
+              <form name="business-intake" action="/__forms.html" method="POST" onSubmit={next} className="inquiry-form">
+                <input type="hidden" name="form-name" value="business-intake" />
+                <input type="hidden" name="requestId" value={requestId} />
+                <h2 className="intake-step-title" tabIndex={-1}>{["A little about you.", "The question in front of you.", "What would work for you?"][step]}</h2>
+                {step === 0 && (
+                  <>
+                    <label>Your name<input name="name" autoComplete="name" required maxLength={120} value={fields.name} onChange={(event) => update("name", event.target.value)} /></label>
+                    <label>Email address<input name="email" type="email" autoComplete="email" required maxLength={254} value={fields.email} onChange={(event) => update("email", event.target.value)} /></label>
+                    <label>Business or organization<input name="business" autoComplete="organization" required maxLength={180} value={fields.business} onChange={(event) => update("business", event.target.value)} /></label>
+                    {select("Where is the business today?", "stage", ["Operating business", "Launching an offer", "Starting a business"])}
+                  </>
+                )}
+                {step === 1 && (
+                  <>
+                    {select("What needs attention first?", "priority", ["Offer and positioning", "Sales and follow-up", "Client delivery", "Business operations", "Not sure yet"])}
+                    <label>What is happening now?<textarea name="message" required minLength={10} maxLength={4000} rows={4} value={fields.message} onChange={(event) => update("message", event.target.value)} placeholder="Describe the situation, including what you’ve already tried." /></label>
+                    <label>What would a useful result look like?<textarea name="outcome" required minLength={10} maxLength={2000} rows={3} value={fields.outcome} onChange={(event) => update("outcome", event.target.value)} placeholder="Tell us what you want to be different." /></label>
+                  </>
+                )}
+                {step === 2 && (
+                  <>
+                    {select("When would you like to begin?", "timing", ["This month", "Next 1–3 months", "Exploring"])}
+                    {select("What investment range are you considering?", "budget", ["Under $2,500", "$2,500–$5,000", "$5,000–$10,000", "$10,000+", "Need guidance"])}
+                    <p className="form-privacy">This helps us assess fit. It is not a quote or a commitment to purchase.</p>
+                    <div className="intake-summary"><strong>{fields.business}</strong><p>{fields.priority} · {fields.stage}</p><p>Reply address: {fields.email}</p></div>
+                    <p className="form-privacy">We use your answers to review and respond to this request. This does not sign you up for marketing. Please leave out passwords and confidential client information.</p>
+                  </>
+                )}
+                <div className="form-trap" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" value={fields.website} onChange={(event) => update("website", event.target.value)} /></label></div>
+                {error && <p className="form-error" role="alert">{error}</p>}
+                <div className="intake-actions">
+                  {step > 0 && <button type="button" className="text-link" disabled={status === "sending"} onClick={() => setStep(step - 1)}><ArrowLeft size={16} />Back</button>}
+                  <button className="button button-blue" disabled={status === "sending"}>{status === "sending" ? <>Saving <Loader2 size={18} className="spin" /></> : <>{step === 2 ? "Send your brief" : "Continue"}<ArrowRight size={18} /></>}</button>
+                </div>
+              </form>
+            </>
+          )}
+        </section>
+      </main>
+      <footer className="intake-footer container">Brown & Gaines · Business strategy & implementation</footer>
+    </>
+  );
 }
