@@ -31,8 +31,9 @@ test("exports the public routes and firm identity", async () => {
   assert.match(home, /Build what/);
   assert.match(home, /Business Strategy &amp; Implementation/);
   assert.match(home, /Johnny B. Gaines III/);
-  assert.match(events, /September 10, 2026/);
-  assert.match(events, /Eventbrite registration link coming soon/);
+  assert.match(events, /Upcoming events/);
+  assert.match(events, /Coming soon\./);
+  assert.doesNotMatch(events, /The Founders’ Dinner|Match Made|UNO, in good company/);
   assert.match(firm, /Ryan Brown/);
   assert.match(firm, /Johnny B\./);
   assert.match(crm, /Fictional business/);
