@@ -1,0 +1,1 @@
+export function Brand({large=false}:{large?:boolean}) {return <a href="/#top" className={`brand ${large?"brand-large":""}`} aria-label="Brown and Gaines, home"><span>Brown</span><span><i>&amp;</i> Gaines<span className="brand-period">.</span></span></a>}

@@ -1,0 +1,3 @@
+"use client";
+import {useEffect,useRef,useState} from "react";
+export function CrmExampleFrame(){const frame=useRef<HTMLIFrameElement>(null);const [height,setHeight]=useState(930);useEffect(()=>{function resize(event:MessageEvent){if(event.source!==frame.current?.contentWindow||event.data?.type!=="bg-crm-height")return;const next=event.data.height;if(typeof next==="number"&&Number.isFinite(next)&&next>=300&&next<=4000)setHeight(Math.ceil(next)+8)}window.addEventListener("message",resize);return()=>window.removeEventListener("message",resize)},[]);return <iframe ref={frame} style={{height}} className="crm-demo-frame" src="/demos/crm.html" title="Illustrative lightweight CRM and adjustable ROI calculator" sandbox="allow-scripts"/>}
