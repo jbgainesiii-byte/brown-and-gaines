@@ -11,7 +11,7 @@ A responsive editorial homepage for the business strategy and implementation fir
 ## Operations
 The first version is intended for private review. Inquiries are stored through Netlify Forms and can be reviewed in the site’s Forms dashboard. Email notifications and automated replies are not configured; connect an owner notification before public launch.
 
-No actual client outcomes or founder photographs were supplied. The examples and gathering image are explicitly labeled illustrative/conceptual.
+No actual client outcomes are presented. The founder profiles use approved portraits; examples and gathering imagery remain explicitly labeled illustrative/conceptual.
 
 ## Validation
 Install with `npm ci`, run locally with `npm run dev`, and create the production-ready static output with `npm run build`. `npm test` verifies the exported routes, both Netlify form definitions, and the client submission format.
